@@ -1,47 +1,163 @@
-local Players = game:GetService("Players")
-local LP = Players.LocalPlayer
+local P,CG,TS,RS,UIS = game:GetService("Players"),game:GetService("CoreGui"),game:GetService("TweenService"),game:GetService("ReplicatedStorage"),game:GetService("UserInputService")
+local LP = P.LocalPlayer local Mouse = LP:GetMouse()
+if CG:FindFirstChild("BlasterHubV6") then CG.BlasterHubV6:Destroy() end
 
-local powerUpList = {
-    ["Carpenter"] = true,
-    ["Double Cash"] = true,
-    ["Headshot Frenzy"] = true,
-    ["InstaKill"] = true,
-    ["Nuke"] = true,
-    ["Slow Tar"] = true
-}
+local cfg = {M=false,E=false,TB=false,PM=false,AL=false,UW=false,UH=false,Side=10,Dist=25}
+local RUW = RS:WaitForChild("Events"):WaitForChild("Global"):WaitForChild("Core"):WaitForChild("UpgradeWeapon")
+local RUH = RS:WaitForChild("Events"):WaitForChild("Global"):WaitForChild("Core"):WaitForChild("UpgradeHealth")
+local Remote = RS:WaitForChild("Blaster"):WaitForChild("Remotes"):WaitForChild("Shoot")
+local Gun = RS:WaitForChild("Assets"):WaitForChild("Weapons"):FindFirstChild("Founders Pistol")
+local f = workspace:WaitForChild("Essentials"):WaitForChild("SpawnedMobs")
+local Cash = LP:WaitForChild("leaderstats"):WaitForChild("Cash")
 
-print("--- FLASH-STEP POWERUP COLLECTOR ACTIVE ---")
+local pUpNames = {["Carpenter"]=true,["Double Cash"]=true,["Headshot Frenzy"]=true,["InstaKill"]=true,["Nuke"]=true,["Slow Tar"]=true}
 
+-- MAGNET
+task.spawn(function() 
+    while task.wait(0.05) do 
+        if cfg.M then 
+            pcall(function() 
+                local c = LP.Character local hrp = c and c:FindFirstChild("HumanoidRootPart") 
+                if hrp and f then 
+                    local pos = hrp.CFrame * CFrame.new(cfg.Side,0,-cfg.Dist) 
+                    for _,m in pairs(f:GetChildren()) do 
+                        local r = m:FindFirstChild("HumanoidRootPart") or m:FindFirstChild("Head") or m 
+                        if r then 
+                            if r:IsA("BasePart") then r.CFrame = pos r.Velocity = Vector3.new(0,0,0) elseif m:IsA("Model") then m:SetPrimaryPartCFrame(pos) end 
+                        end 
+                    end 
+                end 
+            end) 
+        end 
+    end 
+end)
+
+-- ESP
+task.spawn(function() 
+    while task.wait(0.5) do 
+        pcall(function() 
+            if f then 
+                for _,m in pairs(f:GetChildren()) do 
+                    if cfg.E then 
+                        if not m:FindFirstChild("HL") then 
+                            local hl = Instance.new("Highlight") hl.Name = "HL" hl.FillColor = Color3.fromRGB(255,50,50) hl.FillTransparency = 0.5 hl.Parent = m 
+                        end 
+                    else 
+                        if m:FindFirstChild("HL") then m.HL:Destroy() end 
+                    end 
+                end 
+            end 
+        end) 
+    end 
+end)
+
+-- TRIGGERBOT
+task.spawn(function()
+    while task.wait(0.03) do 
+        if cfg.TB and Gun then 
+            pcall(function()
+                local target = Mouse.Target
+                if target and target.Parent then
+                    local model = target.Parent
+                    if model.Parent == f or model == f then
+                        local c = LP.Character
+                        if c and c:FindFirstChild("HumanoidRootPart") then Remote:FireServer(os.clock(), Gun, c.HumanoidRootPart.CFrame, {}, {model}, {}) end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- FLASH-STEP POWER-UP LOOT MAGNET
 task.spawn(function()
     while task.wait(0.5) do
-        pcall(function()
-            local char = LP.Character
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            
-            if hrp then
-                for _, obj in pairs(workspace:GetChildren()) do
-                    if powerUpList[obj.Name] then
-                        -- Find the physical "Part" you discovered in the logs
-                        local targetPart = obj:FindFirstChild("Part") or obj:FindFirstChildOfClass("BasePart")
-                        
-                        if targetPart then
-                            print("Flash-stepping to collect: " .. obj.Name)
-                            
-                            -- 1. Save your exact current safe farming location coordinates
-                            local originalPosition = hrp.CFrame
-                            
-                            -- 2. Instantly teleport your character directly onto the item part
-                            hrp.CFrame = targetPart.CFrame * CFrame.new(0, 2, 0)
-                            
-                            -- 3. Wait a tiny fraction of a second for the server to register the touch pick-up
-                            task.wait(0.05)
-                            
-                            -- 4. Instantly snap back to your safe position before zombies can hit you
-                            hrp.CFrame = originalPosition
+        if cfg.PM then
+            pcall(function()
+                local char = LP.Character local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    for _, obj in pairs(workspace:GetChildren()) do
+                        if pUpNames[obj.Name] then
+                            local targetPart = obj:FindFirstChild("Part") or obj:FindFirstChildOfClass("BasePart")
+                            if targetPart then
+                                local originalPosition = hrp.CFrame
+                                hrp.CFrame = targetPart.CFrame * CFrame.new(0, 2, 0)
+                                task.wait(0.05)
+                                hrp.CFrame = originalPosition
+                            end
                         end
                     end
                 end
-            end
-        end)
+            end)
+        end
     end
 end)
+
+-- STAFF DETECTION
+task.spawn(function() 
+    while task.wait(1) do 
+        if cfg.AL then 
+            pcall(function() 
+                for _,p in pairs(P:GetPlayers()) do 
+                    if p ~= LP and LP.Character and p.Character then 
+                        local my = LP.Character:FindFirstChild("HumanoidRootPart") local th = p.Character:FindFirstChild("HumanoidRootPart") 
+                        if my and th and (my.Position - th.Position).Magnitude < 50 then LP:Kick("Security!") end 
+                    end 
+                end 
+            end) 
+        end 
+    end 
+end)
+
+-- SMART GUN UPGRADE
+task.spawn(function() 
+    while true do 
+        task.wait(0.5) 
+        if cfg.UW and RUW and Cash then 
+            local c = Cash.Value if c > 0 then pcall(function() RUW:FireServer() end) task.wait(0.5) if Cash.Value == c and cfg.UW then task.wait(5) end end 
+        end 
+    end 
+end)
+
+-- SMART HP UPGRADE
+task.spawn(function() 
+    while true do 
+        task.wait(0.5) 
+        if cfg.UH and RUH and Cash then 
+            local c = Cash.Value if c > 0 then pcall(function() RUH:FireServer() end) task.wait(0.5) if Cash.Value == c and cfg.UH then task.wait(5) end end 
+        end 
+    end 
+end)
+
+-- GUI FRAME
+local SG = Instance.new("ScreenGui") SG.Name = "BlasterHubV6" SG.Parent = CG SG.ResetOnSpawn = false
+local MF = Instance.new("Frame") MF.Name = "MF" MF.Size = UDim2.new(0,180,0,320) MF.Position = UDim2.new(0,30,0.3,0) MF.BackgroundColor3 = Color3.fromRGB(20,20,25) MF.Active = true MF.Draggable = true MF.Parent = SG
+local H = Instance.new("Frame") H.Size = UDim2.new(1,0,0,30) H.BackgroundColor3 = Color3.fromRGB(30,30,35) H.Parent = MF
+local T = Instance.new("TextLabel") T.Size = UDim2.new(1,-30,1,0) T.Position = UDim2.new(0,5,0,0) T.BackgroundTransparency = 1 T.Text = "BLASTER PRO HUB V6" T.TextColor3 = Color3.fromRGB(240,240,240) T.Font = Enum.Font.SourceSansBold T.TextSize = 10 T.TextXAlignment = Enum.TextXAlignment.Left T.Parent = H
+local MB = Instance.new("TextButton") MB.Size = UDim2.new(0,24,0,24) MB.Position = UDim2.new(1,-27,0,3) MB.BackgroundColor3 = Color3.fromRGB(45,45,55) MB.Text = "-" MB.TextColor3 = Color3.fromRGB(220,220,220) MB.Font = Enum.Font.SourceSansBold MB.TextSize = 14 MB.Parent = H
+local CF = Instance.new("Frame") CF.Name = "CF" CF.Size = UDim2.new(1,0,1,-30) CF.Position = UDim2.new(0,0,0,30) CF.BackgroundTransparency = 1 CF.Parent = MF
+
+local function btn(txt,y,k)
+    local b = Instance.new("TextButton") b.Size = UDim2.new(1,-20,0,24) b.Position = UDim2.new(0,10,0,y) b.BackgroundColor3 = Color3.fromRGB(35,35,40) b.Text = txt..": OFF" b.TextColor3 = Color3.fromRGB(255,100,100) b.Font = Enum.Font.SourceSansBold b.TextSize = 9 b.Parent = CF
+    b.MouseButton1Click:Connect(function() cfg[k] = not cfg[k] if cfg[k] then b.Text = txt..": ON" b.TextColor3 = Color3.fromRGB(100,255,100) b.BackgroundColor3 = Color3.fromRGB(40,50,40) else b.Text = txt..": OFF" b.TextColor3 = Color3.fromRGB(255,100,100) b.BackgroundColor3 = Color3.fromRGB(35,35,40) end end)
+end
+
+-- RENDER BUTTON LAYOUT ROWS
+btn("MAGNET",10,"M") 
+btn("ESP",37,"E") 
+btn("TRIGGERBOT",64,"TB")
+btn("POWERUP MAGNET",91,"PM")
+btn("ANTI-STAFF KICK",118,"AL") 
+btn("AUTO UPGRADE GUN",145,"UW") 
+btn("AUTO UPGRADE HP",172,"UH")
+
+local function sld(txt,y,minV,maxV,def,k)
+    local tl = Instance.new("TextLabel") tl.Size = UDim2.new(1,-20,0,15) tl.Position = UDim2.new(0,10,0,y) tl.BackgroundTransparency = 1 tl.Text = txt..": "..def tl.TextColor3 = Color3.fromRGB(200,200,200) tl.Font = Enum.Font.SourceSansBold tl.TextSize = 9 tl.Parent = CF
+    local bg = Instance.new("Frame") bg.Size = UDim2.new(1,-20,0,6) bg.Position = UDim2.new(0,10,0,y+15) bg.BackgroundColor3 = Color3.fromRGB(45,45,50) bg.Parent = CF
+    local bar = Instance.new("Frame") bar.Size = UDim2.new((def-minV)/(maxV-minV),0,1,0) bar.BackgroundColor3 = Color3.fromRGB(100,150,255) bar.BorderSizePixel = 0 bar.Parent = bg
+    local function upd(input) local pct = math.clamp((input.Position.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1) bar.Size = UDim2.new(pct, 0, 1, 0) local val = math.round(minV + (pct * (maxV - minV))) cfg[k] = val tl.Text = txt..": "..val end
+    bg.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then local con con = UIS.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then upd(input) end end) UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then con:Disconnect() end end) upd(i) end end)
+end
+sld("SIDE DIRECTION",210,-25,25,10,"Side") sld("DISTANCE",255,5,50,25,"Dist")
+UIS.InputBegan:Connect(function(input, gp) if not gp and input.KeyCode == Enum.KeyCode.K then SG.Enabled = not SG.Enabled end end)
+local min = false MB.MouseButton1Click:Connect(function() min = not min if min then MB.Text = "+" CF.Visible = false MF.Size = UDim2.new(0,180,0,30) else MB.Text = "-" MF.Size = UDim2.new(0,180,0,320) task.wait(0.1) CF.Visible = true end end)
