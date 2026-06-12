@@ -9,7 +9,7 @@ local f = workspace:WaitForChild("Essentials"):WaitForChild("SpawnedMobs")
 local Cash = LP:WaitForChild("leaderstats"):WaitForChild("Cash")
 
 -- KILL COUNTER
-f.ChildRemoved:Connect(function() 
+f.ChildRemoved:Connect(function()) 
     if cfg.M then 
         cfg.Kills = cfg.Kills + 1 
         if CG:FindFirstChild("BlasterHubV4") then 
