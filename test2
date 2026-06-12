@@ -13,7 +13,7 @@ local Cash = LP:WaitForChild("leaderstats"):WaitForChild("Cash")
 local pUpNames = {["Carpenter"]=true,["Double Cash"]=true,["Headshot Frenzy"]=true,["InstaKill"]=true,["Nuke"]=true,["Slow Tar"]=true}
 
 -- MAGNET
-task.spawn(function() 
+task.spawn(function()) 
     while task.wait(0.05) do 
         if cfg.M then 
             pcall(function() 
