@@ -131,11 +131,27 @@ task.spawn(function()
 end)
 
 local SG = Instance.new("ScreenGui") SG.Name = "BlasterHubV6" SG.Parent = CoreGui SG.ResetOnSpawn = false
-local MF = Instance.new("Frame") MF.Name = "MF" MF.Size = UDim2.new(0,180,0,320) MF.Position = UDim2.new(0,30,0.3,0) MF.BackgroundColor3 = Color3.fromRGB(20,20,25) MF.Active = true MF.Draggable = true MF.Parent = SG
+local MF = Instance.new("Frame") MF.Name = "MF" MF.Size = UDim2.new(0,180,0,320) MF.Position = UDim2.new(0,30,0.3,0) MF.BackgroundColor3 = Color3.fromRGB(20,20,25) MF.Active = true MF.Parent = SG
 local H = Instance.new("Frame") H.Size = UDim2.new(1,0,0,30) H.BackgroundColor3 = Color3.fromRGB(30,30,35) H.Parent = MF
 local T = Instance.new("TextLabel") T.Size = UDim2.new(1,-30,1,0) T.Position = UDim2.new(0,5,0,0) T.BackgroundTransparency = 1 T.Text = "BLASTER PRO HUB V6" T.TextColor3 = Color3.fromRGB(240,240,240) T.Font = Enum.Font.SourceSansBold T.TextSize = 10 T.TextXAlignment = Enum.TextXAlignment.Left T.Parent = H
 local MB = Instance.new("TextButton") MB.Size = UDim2.new(0,24,0,24) MB.Position = UDim2.new(1,-27,0,3) MB.BackgroundColor3 = Color3.fromRGB(45,45,55) MB.Text = "-" MB.TextColor3 = Color3.fromRGB(220,220,220) MB.Font = Enum.Font.SourceSansBold MB.TextSize = 14 MB.Parent = H
 local CF = Instance.new("Frame") CF.Name = "CF" CF.Size = UDim2.new(1,0,1,-30) CF.Position = UDim2.new(0,0,0,30) CF.BackgroundTransparency = 1 CF.Parent = MF
+
+-- HEADER-ONLY DRAGGING ENGINE
+local dragging, dragInput, dragStart, startPos
+H.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true dragStart = input.Position startPos = MF.Position
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+    end
+end)
+H.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        MF.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
 
 local function btn(txt,y,k)
     local b = Instance.new("TextButton") b.Size = UDim2.new(1,-20,0,24) b.Position = UDim2.new(0,10,0,y) b.BackgroundColor3 = Color3.fromRGB(35,35,40) b.Text = txt..": OFF" b.TextColor3 = Color3.fromRGB(255,100,100) b.Font = Enum.Font.SourceSansBold b.TextSize = 9 b.Parent = CF
@@ -144,12 +160,27 @@ end
 
 btn("MAGNET",10,"M") btn("ESP",37,"E") btn("TRIGGERBOT",64,"TB") btn("POWERUP MAGNET",91,"PM") btn("ANTI-STAFF KICK",118,"AL") btn("AUTO UPGRADE GUN",145,"UW") btn("AUTO UPGRADE HP",172,"UH")
 
+-- SLIDER FUNCTION WITH CIRCULAR DRAG HANDLES
 local function sld(txt,y,minV,maxV,def,k)
     local tl = Instance.new("TextLabel") tl.Size = UDim2.new(1,-20,0,15) tl.Position = UDim2.new(0,10,0,y) tl.BackgroundTransparency = 1 tl.Text = txt..": "..def tl.TextColor3 = Color3.fromRGB(200,200,200) tl.Font = Enum.Font.SourceSansBold tl.TextSize = 9 tl.Parent = CF
-    local bg = Instance.new("Frame") bg.Size = UDim2.new(1,-20,0,6) bg.Position = UDim2.new(0,10,0,y+15) bg.BackgroundColor3 = Color3.fromRGB(45,45,50) bg.Parent = CF
+    local bg = Instance.new("Frame") bg.Size = UDim2.new(1,-20,0,4) bg.Position = UDim2.new(0,10,0,y+16) bg.BackgroundColor3 = Color3.fromRGB(45,45,50) bg.Parent = CF
     local bar = Instance.new("Frame") bar.Size = UDim2.new((def-minV)/(maxV-minV),0,1,0) bar.BackgroundColor3 = Color3.fromRGB(100,150,255) bar.BorderSizePixel = 0 bar.Parent = bg
-    local function upd(input) local pct = math.clamp((input.Position.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1) bar.Size = UDim2.new(pct, 0, 1, 0) local val = math.round(minV + (pct * (maxV - minV))) cfg[k] = val tl.Text = txt..": "..val end
-    bg.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then local con con = UIS.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then upd(input) end end) UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then con:Disconnect() end end) upd(i) end end)
+    
+    -- CIRCLE DRAG KNOB
+    local knob = Instance.new("TextButton") knob.Size = UDim2.new(0,10,0,10) knob.Position = UDim2.new((def-minV)/(maxV-minV),-5,0.5,-5) knob.BackgroundColor3 = Color3.fromRGB(255,255,255) knob.Text = "" knob.Parent = bg
+    local kc = Instance.new("UICorner") kc.CornerRadius = UDim.new(1,0) kc.Parent = knob
+
+    local function upd(input)
+        local pct = math.clamp((input.Position.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
+        bar.Size = UDim2.new(pct, 0, 1, 0) knob.Position = UDim2.new(pct, -5, 0.5, -5)
+        local val = math.round(minV + (pct * (maxV - minV))) cfg[k] = val tl.Text = txt..": "..val
+    end
+    
+    local sliding = false
+    knob.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then sliding = true end end)
+    bg.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then sliding = true upd(i) end end)
+    UserInputService.InputChanged:Connect(function(input) if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then upd(input) end end)
+    UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then sliding = false end end)
 end
 
 sld("SIDE DIRECTION",210,-25,25,10,"Side") sld("DISTANCE",255,5,50,25,"Dist")
