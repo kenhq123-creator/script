@@ -33,7 +33,7 @@ task.spawn(function())
 end)
 
 -- ESP
-task.spawn(function() 
+task.spawn(function()) 
     while task.wait(0.5) do 
         pcall(function() 
             if f then 
@@ -52,7 +52,7 @@ task.spawn(function()
 end)
 
 -- TRIGGERBOT
-task.spawn(function()
+task.spawn(function())
     while task.wait(0.03) do 
         if cfg.TB and Gun then 
             pcall(function()
@@ -70,7 +70,7 @@ task.spawn(function()
 end)
 
 -- FLASH-STEP POWER-UP LOOT MAGNET
-task.spawn(function()
+task.spawn(function())
     while task.wait(0.5) do
         if cfg.PM then
             pcall(function()
@@ -94,7 +94,7 @@ task.spawn(function()
 end)
 
 -- STAFF DETECTION
-task.spawn(function() 
+task.spawn(function()) 
     while task.wait(1) do 
         if cfg.AL then 
             pcall(function() 
@@ -110,7 +110,7 @@ task.spawn(function()
 end)
 
 -- SMART GUN UPGRADE
-task.spawn(function() 
+task.spawn(function()) 
     while true do 
         task.wait(0.5) 
         if cfg.UW and RUW and Cash then 
@@ -120,7 +120,7 @@ task.spawn(function()
 end)
 
 -- SMART HP UPGRADE
-task.spawn(function() 
+task.spawn(function()) 
     while true do 
         task.wait(0.5) 
         if cfg.UH and RUH and Cash then 
