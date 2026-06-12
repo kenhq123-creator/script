@@ -1,0 +1,47 @@
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+
+local powerUpList = {
+    ["Carpenter"] = true,
+    ["Double Cash"] = true,
+    ["Headshot Frenzy"] = true,
+    ["InstaKill"] = true,
+    ["Nuke"] = true,
+    ["Slow Tar"] = true
+}
+
+print("--- FLASH-STEP POWERUP COLLECTOR ACTIVE ---")
+
+task.spawn(function()
+    while task.wait(0.5) do
+        pcall(function()
+            local char = LP.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            
+            if hrp then
+                for _, obj in pairs(workspace:GetChildren()) do
+                    if powerUpList[obj.Name] then
+                        -- Find the physical "Part" you discovered in the logs
+                        local targetPart = obj:FindFirstChild("Part") or obj:FindFirstChildOfClass("BasePart")
+                        
+                        if targetPart then
+                            print("Flash-stepping to collect: " .. obj.Name)
+                            
+                            -- 1. Save your exact current safe farming location coordinates
+                            local originalPosition = hrp.CFrame
+                            
+                            -- 2. Instantly teleport your character directly onto the item part
+                            hrp.CFrame = targetPart.CFrame * CFrame.new(0, 2, 0)
+                            
+                            -- 3. Wait a tiny fraction of a second for the server to register the touch pick-up
+                            task.wait(0.05)
+                            
+                            -- 4. Instantly snap back to your safe position before zombies can hit you
+                            hrp.CFrame = originalPosition
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
